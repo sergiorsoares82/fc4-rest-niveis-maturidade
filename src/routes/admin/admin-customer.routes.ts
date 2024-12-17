@@ -25,7 +25,7 @@ router.get('/:customerId', async (req, res) => {
   //res.json(customer);
 });
 
-router.post('/:customerId', async (req, res) => {
+router.patch('/:customerId', async (req, res) => {
   const customerService = await createCustomerService();
   const { phone, address, email, password } = req.body;
   const customer = await customerService.updateCustomer({
