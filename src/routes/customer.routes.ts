@@ -1,11 +1,11 @@
-import { Router } from "express";
-import { createCustomerService } from "../services/customer.service";
-import { CreateCustomerDto } from "../validations/customer.validations";
-import { validateSync } from "class-validator";
+import { Router } from 'express';
+import { createCustomerService } from '../services/customer.service';
+import { CreateCustomerDto } from '../validations/customer.validations';
+import { validateSync } from 'class-validator';
 
 const router = Router();
 
-router.post("/createCustomer", async (req, res) => {
+router.post('/', async (req, res) => {
   const customerService = await createCustomerService();
   const validator = new CreateCustomerDto(req.body);
   const errors = validateSync(validator);

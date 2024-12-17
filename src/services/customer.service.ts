@@ -1,10 +1,13 @@
-import { Repository } from "typeorm";
-import { Customer } from "../entities/Customer";
-import { User } from "../entities/User";
-import { createDatabaseConnection } from "../database";
+import { Repository } from 'typeorm';
+import { Customer } from '../entities/Customer';
+import { User } from '../entities/User';
+import { createDatabaseConnection } from '../database';
 
 export class CustomerService {
-  constructor(private customerRepository: Repository<Customer>,private userRepository: Repository<User>) {}
+  constructor(
+    private customerRepository: Repository<Customer>,
+    private userRepository: Repository<User>,
+  ) {}
 
   async registerCustomer(data: {
     name: string;
@@ -19,7 +22,7 @@ export class CustomerService {
     const userExists = await this.userRepository.findOne({ where: { email } });
 
     if (userExists) {
-      throw new Error("User already exists");
+      throw new Error('User already exists');
     }
 
     // Create a new user
@@ -41,15 +44,16 @@ export class CustomerService {
   }
 
   async updateCustomer(data: {
+    customerId: number;
     email: string;
     phone?: string;
     address?: string;
     password?: string;
   }): Promise<Customer | null> {
-    const { email, phone, address, password } = data;
+    const { customerId, email, phone, address, password } = data;
     const customer = await this.customerRepository.findOne({
-      where: { user: { email } },
-      relations: ["user"],
+      where: { id: customerId },
+      relations: ['user'],
     });
     if (!customer) {
       return null;
@@ -88,8 +92,8 @@ export class CustomerService {
   }
 }
 
-
 export async function createCustomerService(): Promise<CustomerService> {
-  const { customerRepository, userRepository } = await createDatabaseConnection();
+  const { customerRepository, userRepository } =
+    await createDatabaseConnection();
   return new CustomerService(customerRepository, userRepository);
 }
