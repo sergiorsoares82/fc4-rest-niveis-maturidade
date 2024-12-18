@@ -1,21 +1,25 @@
-import { Router } from 'express';
-import { createProductService } from '../../services/product.service';
-import { Resource, ResourceCollection } from '../../http/resource';
-import { defaultCorsOptions } from '../../http/cors';
-import cors from 'cors';
-
+import { Router } from "express";
+import { createProductService } from "../../services/product.service";
+import { ResourceCollection } from "../../http/resource";
+import cors from "cors";
+import { defaultCorsOptions } from "../../http/cors";
+import {
+  ProductResource,
+  ProductResourceCollection,
+} from "../../http/product-resource";
 const router = Router();
 
 const corsCollection = cors({
   ...defaultCorsOptions,
   methods: ["GET", "POST"],
 });
+
 const corsItem = cors({
   ...defaultCorsOptions,
   methods: ["GET", "PATCH", "DELETE"],
 });
 
-router.post('/', corsCollection, async (req, res, next) => {
+router.post("/", corsCollection, async (req, res, next) => {
   const productService = await createProductService();
   const { name, slug, description, price, categoryIds } = req.body;
   try {
@@ -24,56 +28,52 @@ router.post('/', corsCollection, async (req, res, next) => {
       slug,
       description,
       price,
-      categoryIds,
+      categoryIds
     );
-    res.location(`/admin/products/${product.id}`).status(201);
-    const resource = new Resource(product);
+    res.set("Location", `/admin/products/${product.id}`).status(201);
+    const resource = new ProductResource(product, req);
     next(resource);
   } catch (e) {
     next(e);
   }
 });
 
-router.get('/:productId', corsItem, async (req, res, next) => {
+router.get("/:productId", corsItem, async (req, res, next) => {
   const productService = await createProductService();
-  const product = await productService.getProductById(
-    parseInt(req.params.productId as string),
-  );
-
+  const product = await productService.getProductById(+req.params.productId);
   if (!product) {
-    res.status(404).json({
-      title: 'Product not found',
+    return res.status(404).json({
+      title: "Not Found",
       status: 404,
-      detail: `The product with id ${req.params.productId} does not exist`,
+      detail: `Product with id ${req.params.productId} not found`,
     });
-    return;
   }
-  const resource = new Resource(product);
+  const resource = new ProductResource(product, req);
   next(resource);
 });
 
-router.patch('/:productId', corsItem, async (req, res) => {
+router.patch("/:productId", corsItem, async (req, res, next) => {
   const productService = await createProductService();
   const { name, slug, description, price, categoryIds } = req.body;
   const product = await productService.updateProduct({
-    id: parseInt(req.params.productId),
+    id: +req.params.productId,
     name,
     slug,
     description,
     price,
     categoryIds,
   });
-  const resource = new Resource(product);
-  res.json(resource);
+  const resource = new ProductResource(product!, req);
+  next(resource);
 });
 
-router.delete('/:productId', corsItem, async (req, res) => {
+router.delete("/:productId", corsItem, async (req, res) => {
   const productService = await createProductService();
-  await productService.deleteProduct(parseInt(req.params.productId));
+  await productService.deleteProduct(+req.params.productId);
   res.status(204).send();
 });
 
-router.get('/', corsCollection, async (req, res, next) => {
+router.get("/", corsCollection, async (req, res, next) => {
   const productService = await createProductService();
   const {
     page = 1,
@@ -82,7 +82,7 @@ router.get('/', corsCollection, async (req, res, next) => {
     categories_slug: categoriesSlugStr,
   } = req.query;
   const categories_slug = categoriesSlugStr
-    ? categoriesSlugStr.toString().split(',')
+    ? categoriesSlugStr.toString().split(",")
     : [];
   const { products, total } = await productService.listProducts({
     page: parseInt(page as string),
@@ -93,8 +93,12 @@ router.get('/', corsCollection, async (req, res, next) => {
     },
   });
 
-  if (!req.headers['accept'] || req.headers["accept"] === "*/*" || req.headers['accept'] === 'application/json') {
-    const collection = new ResourceCollection(products, {
+  if (
+    !req.headers["accept"] ||
+    req.headers["accept"] === "*/*" ||
+    req.headers["accept"] === "application/json"
+  ) {
+    const collection = new ProductResourceCollection(products, req, {
       paginationData: {
         total,
         page: parseInt(page as string),
@@ -103,15 +107,19 @@ router.get('/', corsCollection, async (req, res, next) => {
     });
     return next(collection);
   }
-  if (req.headers['accept'] === 'text/csv') {
+
+  if (req.headers["accept"] === "text/csv") {
     const csv = products
       .map((product) => {
         return `${product.name},${product.slug},${product.description},${product.price}`;
       })
-      .join('\n');
-    res.contentType('text/csv');
+      .join("\n");
+    res.set("Content-Type", "text/csv");
     return res.send(csv);
   }
 });
+
+router.options("/", corsCollection);
+router.options("/:productId", corsItem);
 
 export default router;
