@@ -1,18 +1,23 @@
 import {
   Column,
+  CreateDateColumn,
   Entity,
   Generated,
   ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
-} from "typeorm";
-import { Product } from "./Product";
-import { Customer } from "./Customer";
+} from 'typeorm';
+import { Product } from './Product';
+import { Customer } from './Customer';
 
 @Entity()
 export class Cart {
   @PrimaryGeneratedColumn()
   id: number;
+
+  @Column()
+  @Generated('uuid')
+  uuid: string;
 
   @OneToMany(() => CartItem, (cartItem) => cartItem.product)
   items: CartItem[];
@@ -20,7 +25,7 @@ export class Cart {
   @ManyToOne(() => Customer)
   customer: Customer | null;
 
-  @Column()
+  @CreateDateColumn()
   createdAt: Date;
 }
 

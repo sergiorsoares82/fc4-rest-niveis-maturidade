@@ -11,21 +11,21 @@ import adminCategoryRoutes from './routes/admin/admin-category.routes';
 import loginRoutes from './routes/session-auth.routes';
 import jwtAuthRoutes from './routes/jwt-auth.routes';
 import { createCustomerService } from './services/customer.service';
-import session from 'express-session';
+// import session from 'express-session';
 import jwt from 'jsonwebtoken';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
-app.use(
-  session({
-    secret: '123',
-    resave: false,
-    saveUninitialized: false,
-    cookie: { secure: false },
-  }),
-);
+// app.use(
+//   session({
+//     secret: '123',
+//     resave: false,
+//     saveUninitialized: false,
+//     cookie: { secure: false },
+//   }),
+// );
 
 // app.use(async (req, res, next) => {
 //   const protectedRoutes = ["/admin", "/orders"];
@@ -42,6 +42,7 @@ app.use(
 // });
 
 app.use(async (req, res, next) => {
+  console.log(req.headers.authorization);
   const protectedRoutes = ['/admin', '/orders'];
   const isProtectedRoute = protectedRoutes.some((route) =>
     req.url.startsWith(route),
@@ -55,7 +56,6 @@ app.use(async (req, res, next) => {
     }
 
     const token = authHeader.split(' ')[1];
-
     try {
       const decoded = jwt.verify(token, '123');
       //@ts-expect-error
@@ -73,7 +73,7 @@ app.use('/session', loginRoutes);
 app.use('/customers', customerRoutes);
 app.use('/categories', categoryRoutes);
 app.use('/products', productRoutes);
-app.use('/cart', cartRoutes);
+app.use('/carts', cartRoutes);
 app.use('/orders', orderRoutes);
 app.use('/admin/products', adminProductRoutes);
 app.use('/admin/customers', adminCustomerRoutes);
