@@ -40,8 +40,7 @@ router.post('/:cartUuid/items', async (req, res) => {
 
 router.get('/:cartUuid', async (req, res) => {
   const cartService = await createCartService();
-  //@ts-expect-error
-  const cartId = req.session.cartId;
+
   const cart = await cartService.getCart(req.params.cartUuid);
   res.json(cart);
 });
